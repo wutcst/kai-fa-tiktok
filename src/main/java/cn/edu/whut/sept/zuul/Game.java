@@ -1,92 +1,70 @@
-/**
- * 该类是“World-of-Zuul”应用程序的主类。
- * 《World of Zuul》是一款简单的文本冒险游戏。用户可以在一些房间组成的迷宫中探险。
- * 你们可以通过扩展该游戏的功能使它更有趣!.
- *
- * 如果想开始执行这个游戏，用户需要创建Game类的一个实例并调用“play”方法。
- *
- * Game类的实例将创建并初始化所有其他类:它创建所有房间，并将它们连接成迷宫；它创建解析器
- * 接收用户输入，并将用户输入转换成命令后开始运行游戏。
- *
- * @author  Michael Kölling and David J. Barnes
- * @version 1.0
- */
 package cn.edu.whut.sept.zuul;
 
-public class Game
-{
-    private Parser parser;
-    private Room currentRoom;
+/**
+ * 游戏业务总控制器.
+ * 将原有的 currentRoom 解耦交由新增的 Player 类深度接管.
+ */
+public class Game {
+    private final Parser parser;
+    private final Player player; // 核心变更点
 
-    public Game()
-    {
-        createRooms();
+    public Game() {
+        player = new Player("玩家A", 50); // 初始化负重限制 50kg
         parser = new Parser();
+        createRooms();
     }
 
-    private void createRooms()
-    {
+    private void createRooms() {
         Room outside, theater, pub, lab, office;
 
-        // create the rooms
-        outside = new Room("outside the main entrance of the university");
-        theater = new Room("in a lecture theater");
-        pub = new Room("in the campus pub");
-        lab = new Room("in a computing lab");
-        office = new Room("in the computing admin office");
+        outside = new Room("大学主入口");
+        theater = new Room("阶梯教室");
+        pub = new Room("校园酒吧");
+        lab = new Room("计算机实验室");
+        office = new Room("机房管理办公室");
 
-        // initialise room exits
+        // 放置初始测试物品，支持一个房间放多个，带描述和重量
+        outside.addItem(new Item("cookie", "魔法饼干", 2));
+        lab.addItem(new Item("book", "算法导论", 12));
+        lab.addItem(new Item("computer", "旧款笔记本电脑", 8));
+        office.addItem(new Item("key", "机房黄铜钥匙", 1));
+
         outside.setExit("east", theater);
         outside.setExit("south", lab);
         outside.setExit("west", pub);
-
         theater.setExit("west", outside);
-
         pub.setExit("east", outside);
-
         lab.setExit("north", outside);
         lab.setExit("east", office);
-
         office.setExit("west", lab);
 
-        currentRoom = outside;  // start game outside
+        player.setCurrentRoom(outside); // 将初始化房间挂载在玩家实体上
     }
 
-    public void play()
-    {
+    public void play() {
         printWelcome();
 
-        // Enter the main command loop.  Here we repeatedly read commands and
-        // execute them until the game is over.
-
         boolean finished = false;
-        while (! finished) {
+        while (!finished) {
             Command command = parser.getCommand();
-            if(command == null) {
-                System.out.println("I don't understand...");
+            if (command == null) {
+                System.out.println("我不明白这个输入指令...");
             } else {
                 finished = command.execute(this);
             }
         }
-
-        System.out.println("Thank you for playing.  Good bye.");
+        System.out.println("感谢参与，再见！");
     }
 
-    private void printWelcome()
-    {
+    private void printWelcome() {
         System.out.println();
-        System.out.println("Welcome to the World of Zuul!");
-        System.out.println("World of Zuul is a new, incredibly boring adventure game.");
-        System.out.println("Type 'help' if you need help.");
+        System.out.println("欢迎来到《World of Zuul》扩展重构版本!");
+        System.out.println("输入 'help' 获取所有可运行命令.");
         System.out.println();
-        System.out.println(currentRoom.getLongDescription());
+        System.out.println(player.getCurrentRoom().getLongDescription());
     }
 
-    public Room getCurrentRoom() {
-        return currentRoom;
-    }
-
-    public void setCurrentRoom(Room room){
-        this.currentRoom = room;
+    public Player getPlayer() {
+        return player;
     }
 }
