@@ -113,18 +113,19 @@ public class Room {
      */
     public String getItemString() {
         if (items.isEmpty()) {
-            return "房间物品：空无一物。";
+            return "房间物品：这里空无一物。";
         }
-        StringBuilder returnString = new StringBuilder("房间内可见物件：");
+        StringBuilder returnString = new StringBuilder("房间内可见物件：\n");
         int totalWeight = 0;
         for (String name : items.keySet()) {
             Item item = items.get(name);
-            returnString.append(" ")
+            returnString.append("  - ")
                     .append(name)
-                    .append("(").append(item.getDescription()).append("-").append(item.getWeight()).append("kg)");
+                    .append(" (说明: ").append(item.getDescription())
+                    .append(", 重量: ").append(item.getWeight()).append("kg)\n");
             totalWeight += item.getWeight();
         }
-        return returnString + " | 房间内物品总重: " + totalWeight + "kg";
+        return returnString.append(">> 房间内物品总重: ").append(totalWeight).append("kg").toString();
     }
 
     /**

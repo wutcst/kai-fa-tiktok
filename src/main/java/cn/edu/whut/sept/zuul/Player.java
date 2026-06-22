@@ -201,16 +201,22 @@ public class Player {
      *
      * @return String 格式化后的背包信息字符串
      */
+    /**
+     * 拼接并格式化输出背包状态与当前玩家的负重详情。
+     */
     public String getInventoryString() {
         if (inventory.isEmpty()) {
-            return "随身背包：当前没有任何物件。";
+            return "随身背包：目前没有携带任何物品。 (负重: 0/" + getMaxWeight() + "kg)";
         }
-        StringBuilder returnString = new StringBuilder("随身背包物件：");
+        StringBuilder returnString = new StringBuilder("随身背包物件：\n");
         for (String itemName : inventory.keySet()) {
-            returnString.append(" ")
+            Item item = inventory.get(itemName);
+            returnString.append("  * ")
                     .append(itemName)
-                    .append("(").append(inventory.get(itemName).getWeight()).append("kg)");
+                    .append(" (重量: ").append(item.getWeight()).append("kg)\n");
         }
-        return returnString + " | 负重状态: " + currentWeight + "kg/" + maxWeight + "kg";
+        return returnString.append(">> 当前负重状态: ")
+                .append(currentWeight).append("kg / ")
+                .append(maxWeight).append("kg").toString();
     }
 }
