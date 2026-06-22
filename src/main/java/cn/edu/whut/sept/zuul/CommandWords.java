@@ -25,7 +25,9 @@ public class CommandWords
         commands.put("quit", new QuitCommand());
         commands.put("take", new TakeCommand());
         commands.put("drop", new DropCommand());
-        commands.put("back", new BackCommand()); // 核心新增：注册 back 命令
+        commands.put("back", new BackCommand());
+        commands.put("look", new LookCommand());
+        commands.put("items", new ItemsCommand());
     }
 
     /**
