@@ -1,4 +1,4 @@
-package cn.edu.whut.sept.zuul;
+package cn.edu.whut.sept.zuul.model;
 
 /**
  * 物品实体类.

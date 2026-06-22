@@ -1,4 +1,8 @@
-package cn.edu.whut.sept.zuul;
+package cn.edu.whut.sept.zuul.command;
+
+import cn.edu.whut.sept.zuul.model.Player;
+import cn.edu.whut.sept.zuul.model.Room;
+import cn.edu.whut.sept.zuul.core.Game;
 
 import java.util.Stack;
 
