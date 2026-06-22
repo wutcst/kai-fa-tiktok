@@ -13,6 +13,8 @@ public class CommandWords
         commands.put("go", new GoCommand());
         commands.put("help", new HelpCommand(this));
         commands.put("quit", new QuitCommand());
+        commands.put("take", new TakeCommand()); // 新增take命令注册
+        commands.put("drop", new DropCommand()); // 新增drop命令注册
     }
 
     public Command get(String word)
