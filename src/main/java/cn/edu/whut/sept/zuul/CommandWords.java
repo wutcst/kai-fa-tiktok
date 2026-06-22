@@ -8,8 +8,7 @@ import java.util.Iterator;
  * 维护游戏中所有合法的命令字以及对应的命令对象。
  * 用于对用户输入的命令进行解析和分发。
  *
- * @author 组员B
- * @version 1.0
+ * @author B
  */
 public class CommandWords
 {
@@ -24,8 +23,9 @@ public class CommandWords
         commands.put("go", new GoCommand());
         commands.put("help", new HelpCommand(this));
         commands.put("quit", new QuitCommand());
-        commands.put("take", new TakeCommand()); // 新增take命令注册
-        commands.put("drop", new DropCommand()); // 新增drop命令注册
+        commands.put("take", new TakeCommand());
+        commands.put("drop", new DropCommand());
+        commands.put("back", new BackCommand()); // 核心新增：注册 back 命令
     }
 
     /**
