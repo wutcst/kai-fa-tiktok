@@ -1,0 +1,36 @@
+name: Java CI with Maven
+
+on:
+  push:
+    branches: [ "master", "feature/**" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Run Tests
+      # 对应要求5：自动触发测试用例检查
+      run: mvn test
+
+    - name: Build with Maven (Generate JAR)
+      # 对应要求6：自动化打包，生成可执行 jar 文件
+      run: mvn clean package -DskipTests
+
+    - name: Upload JAR
+      # 将打包好的 JAR 文件上传到 GitHub，方便老师下载检查
+      uses: actions/upload-artifact@v4
+      with:
+        name: project-executable-jar
+        path: target/*.jar
