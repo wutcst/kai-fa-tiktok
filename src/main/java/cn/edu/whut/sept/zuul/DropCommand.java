@@ -1,6 +1,21 @@
 package cn.edu.whut.sept.zuul;
 
+/**
+ * 丢弃物品命令类.
+ * 负责处理玩家在游戏中丢弃(drop)物品的操作逻辑。
+ * 支持丢弃特定物品或使用 "all" 参数丢弃背包中的全部物品。
+ *
+ * @author 你的名字/组员B
+ * @version 1.0
+ */
 public class DropCommand extends Command {
+
+    /**
+     * 执行丢弃命令的具体逻辑.
+     *
+     * @param game 当前游戏主干实例，用于获取玩家(Player)等上下文信息
+     * @return boolean 返回 false 表示操作完成后游戏继续运行，不退出
+     */
     @Override
     public boolean execute(Game game) {
         if (!hasSecondWord()) {

@@ -1,6 +1,21 @@
 package cn.edu.whut.sept.zuul;
 
+/**
+ * 拾取物品命令类.
+ * 负责处理玩家在游戏中拾取(take)物品的操作逻辑。
+ * 支持拾取特定物品或拾取房间内的全部(all)物品，自带重量校验。
+ *
+ * @author 你的名字/组员B
+ * @version 1.0
+ */
 public class TakeCommand extends Command {
+
+    /**
+     * 执行拾取命令的具体逻辑.
+     *
+     * @param game 当前游戏主对象实例，用于获取玩家等上下文状态
+     * @return boolean 始终返回 false，表示操作完成后游戏应继续运行
+     */
     @Override
     public boolean execute(Game game) {
         if (!hasSecondWord()) {
