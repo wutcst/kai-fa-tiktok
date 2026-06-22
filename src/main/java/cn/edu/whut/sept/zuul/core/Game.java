@@ -1,4 +1,10 @@
-package cn.edu.whut.sept.zuul;
+package cn.edu.whut.sept.zuul.core;
+import cn.edu.whut.sept.zuul.command.Command;
+import cn.edu.whut.sept.zuul.model.Item;
+import cn.edu.whut.sept.zuul.model.Player;
+import cn.edu.whut.sept.zuul.model.Room;
+import cn.edu.whut.sept.zuul.model.TransporterRoom;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;

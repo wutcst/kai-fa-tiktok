@@ -1,4 +1,9 @@
-package cn.edu.whut.sept.zuul;
+package cn.edu.whut.sept.zuul.command;
+
+import cn.edu.whut.sept.zuul.model.Player;
+import cn.edu.whut.sept.zuul.model.Room;
+import cn.edu.whut.sept.zuul.model.TransporterRoom;
+import cn.edu.whut.sept.zuul.core.Game;
 
 public class GoCommand extends Command {
     @Override
