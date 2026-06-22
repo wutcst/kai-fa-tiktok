@@ -28,6 +28,7 @@ public class CommandWords
         commands.put("back", new BackCommand());
         commands.put("look", new LookCommand());
         commands.put("items", new ItemsCommand());
+        commands.put("eat", new EatCommand());
     }
 
     /**

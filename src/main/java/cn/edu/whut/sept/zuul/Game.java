@@ -1,4 +1,7 @@
 package cn.edu.whut.sept.zuul;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 /**
  * 游戏业务总控制器。
@@ -24,50 +27,80 @@ public class Game {
     /** 任务状态机标志：钥匙运送解密任务是否已经达成 */
     private boolean keyTaskCompleted = false;
 
+    private final List<Room> allRooms;
+    private final Random random;
     /**
      * 初始化游戏控制器。
      * 生成玩家、配置解析器，并构建所有的游戏房间及连接路线。
      */
     public Game() {
-        player = new Player("玩家A", 50);
+        allRooms = new ArrayList<>();
+        random = new Random();
+        player = new Player("探险者", 50);
         parser = new Parser();
         createRooms();
     }
 
     /**
      * 构建所有基础房间、初始化隐藏房间、投放测试物品，并连接初始地图。
+     * 开局在多个房间生成饼干（概率分布） 如果运气太差一个都没刷出来，在出生点放一个
      */
     private void createRooms() {
-        Room outside, theater, pub, office;
+        Room outside, theater, pub, lab, office, storage;
+        TransporterRoom portal; // 特殊传输房间
 
-        // 1. 实例化场景房间
+        // 1. 实例化场景
         outside = new Room("大学主入口");
         theater = new Room("阶梯教室");
         pub = new Room("校园酒吧");
         lab = new Room("计算机实验室");
-        office = new Room("机房管理办公室");
+        office = new Room("管理办公室");
+        storage = new Room("黑暗的储藏室");
+        // 创建特殊传输房间
+        portal = new TransporterRoom("名为‘虚空之眼’的神秘传送门");
 
-        // 2. 初始化隐藏新场景（暂时游离于地图之外，没有可用连线进入）
-        secretRoom = new Room("地下秘密核心机房（满墙闪烁着蓝光的超级计算机阵列）");
+        // 将所有房间加入列表管理
+        allRooms.add(outside); allRooms.add(theater); allRooms.add(pub);
+        allRooms.add(lab); allRooms.add(office); allRooms.add(storage);
+        allRooms.add(portal);
 
-        // 3. 在特定场景放置初始测试物品
-        outside.addItem(new Item("cookie", "魔法饼干", 2));
-        lab.addItem(new Item("book", "算法导论", 12));
-        lab.addItem(new Item("computer", "旧款笔记本电脑", 8));
-        office.addItem(new Item("key", "机房黄铜钥匙", 1)); // 核心任务物品
+        // 2. 放置魔法饼干（随机选择一个房间放置，且不放在传送室）
+        Room cookieRoom = allRooms.get(random.nextInt(allRooms.size() - 1));
+        cookieRoom.addItem(new Item("cookie", "散发着微光的魔法饼干", 1));
+        System.out.println("[系统调试] 魔法饼干已随机出现在: " + cookieRoom.getShortDescription());
 
-        // 4. 建立初始常规场景的东南西北连接
-        outside.setExit("east", theater);
-        outside.setExit("south", lab);
-        outside.setExit("west", pub);
+        // 3. 其他常规物品放置
+        office.addItem(new Item("key", "机房黄铜钥匙", 1));
+        pub.addItem(new Item("wine", "一瓶陈年红酒", 3));
+
+        // 4. 设置出口
+        outside.setExit("east", theater); outside.setExit("south", lab);
         theater.setExit("west", outside);
         pub.setExit("east", outside);
-        lab.setExit("north", outside);
-        lab.setExit("east", office);
-        office.setExit("west", lab);
+        lab.setExit("north", outside); lab.setExit("east", office);
+        office.setExit("west", lab); office.setExit("south", storage);
+        storage.setExit("north", office);
 
-        // 5. 设置玩家出生点
+        // 任何地方都可以进入传送门
+        storage.setExit("down", portal);
+        portal.setExit("up", storage); // 虽然传送门会随机传送，但仍保留一个出口逻辑
+
         player.setCurrentRoom(outside);
+
+        for (Room room : allRooms) {
+            if (!(room instanceof TransporterRoom) && random.nextDouble() < 0.3) {
+                room.addItem(new Item("cookie", "散发着甜香的魔法饼干", 1));
+            }
+        }
+        if (!player.getCurrentRoom().getItems().containsKey("cookie")) {
+            player.getCurrentRoom().addItem(new Item("cookie", "新手福利饼干", 1));
+        }
+    }
+    /**
+     * 获取地图上随机一个普通房间（用于传送）。
+     */
+    public Room getRandomRoom() {
+        return allRooms.get(random.nextInt(allRooms.size()));
     }
 
     /**

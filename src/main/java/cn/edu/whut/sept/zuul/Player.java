@@ -219,4 +219,30 @@ public class Player {
                 .append(currentWeight).append("kg / ")
                 .append(maxWeight).append("kg").toString();
     }
+    /**
+     * 永久提升玩家的最大负重能力（用于 Magic Cookie 等道具的增益）。
+     *
+     * @param bonusWeight 增加的重量数值
+     */
+    public void increaseMaxWeight(int bonusWeight) {
+        this.maxWeight += bonusWeight;
+        System.out.println("✨ 感觉到一股力量涌动！你的负重上限提升了 " + bonusWeight + "kg！");
+        System.out.println(">> 当前最大负重: " + this.maxWeight + "kg");
+    }
+
+    /**
+     * 消耗背包中的指定物品。
+     *
+     * @param itemName 物品名称
+     * @return boolean 若背包中有此物品并成功消耗返回 true
+     */
+    public boolean consumeItem(String itemName) {
+        if (inventory.containsKey(itemName)) {
+            Item item = inventory.remove(itemName);
+            this.currentWeight -= item.getWeight();
+            return true;
+        }
+        return false;
+    }
+
 }
