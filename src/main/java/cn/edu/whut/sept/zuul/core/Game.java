@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
+import java.util.Arrays;
 /**
  * 游戏业务总控制器。
  * 负责游戏全局初始化、主循环维护以及指令派发。
@@ -48,7 +48,7 @@ public class Game {
     private StoryListener storyListener;
 
     private final List<Room> allRooms;
-    private final Random random;
+    private final Random random = new Random();
 
     public interface StoryListener {
         void onStoryEvent(String title, String message);
@@ -77,7 +77,6 @@ public class Game {
      */
     public Game() {
         allRooms = new ArrayList<>();
-        random = new Random();
         player = new Player("探险者", 50);
         parser = new Parser();
         createRooms();
@@ -135,72 +134,61 @@ public class Game {
      * 开局在多个房间生成饼干（概率分布） 如果运气太差一个都没刷出来，在出生点放一个
      */
     private void createRooms() {
-        Room outside, theater, pub, office, storage;
-        TransporterRoom portal; // 特殊传输房间
+        // --- 1. 实例化原有房间 ---
+        Room outside = new Room("大学主入口"); outside.setImageName("outside.png");
+        Room theater = new Room("阶梯教室"); theater.setImageName("theater.png");
+        Room pub = new Room("校园酒吧"); pub.setImageName("pub.png");
+        lab = new Room("计算机实验室"); lab.setImageName("lab.png");
+        secretRoom = new Room("地下核心机房"); secretRoom.setImageName("secret.png");
+        Room office = new Room("管理办公室"); office.setImageName("office.png");
+        Room storage = new Room("黑暗的储藏室"); storage.setImageName("storage.png");
+        TransporterRoom portal = new TransporterRoom("虚空之眼"); portal.setImageName("portal.png");
 
-        // 1. 实例化场景
-        outside = new Room("大学主入口");
-        outside.setImageName("outside.png");
-        theater = new Room("阶梯教室");
-        theater.setImageName("theater.png");
-        pub = new Room("校园酒吧");
-        pub.setImageName("pub.png");
-        this.lab = new Room("计算机实验室");
-        this.lab.setImageName("lab.png");
-        this.secretRoom = new Room("神秘的地下核心机房");
-        this.secretRoom.setImageName("secret.png");
-        office = new Room("管理办公室");
-        office.setImageName("office.png");
-        storage = new Room("黑暗的储藏室");
-        storage.setImageName("storage.png");
-        // 创建特殊传输房间
-        portal = new TransporterRoom("名为‘虚空之眼’的神秘传送门");
-        portal.setImageName("portal.png");
+        // --- 2. 实例化【新增】房间 ---
+        Room garden = new Room("迷雾园林"); garden.setImageName("mistygar.png");
+        Room library = new Room("自动化图书馆"); library.setImageName("autolib.png");
+        Room reactor = new Room("能源反应堆"); reactor.setImageName("energy.png");
+        Room sewers = new Room("废弃的下水道"); sewers.setImageName("sewer.png");
 
-        // 将所有房间加入列表管理
-        allRooms.add(outside);
-        allRooms.add(theater);
-        allRooms.add(pub);
-        allRooms.add(this.lab);
-        allRooms.add(office);
-        allRooms.add(storage);
-        allRooms.add(portal);
-        allRooms.add(this.secretRoom);
+        // 设置特殊属性
+        sewers.setDark(true); // 下水道是黑暗的
+        storage.setDark(true);
 
-        // 2. 放置魔法饼干（随机选择一个房间放置，且不放在传送室或秘密核心机房）
-        Room cookieRoom = allRooms.get(random.nextInt(allRooms.size() - 2));
-        cookieRoom.addItem(new Item("cookie", "散发着微光的魔法饼干", 1));
-        System.out.println("[系统调试] 魔法饼干已随机出现在: " + cookieRoom.getShortDescription());
-
-        // 3. 其他常规物品放置
-        office.addItem(new Item("key", "机房黄铜钥匙", 1));
-        pub.addItem(new Item("wine", "一瓶陈年红酒", 3));
-
-        // 4. 设置出口
+        // --- 3. 建立连接 ---
+        outside.setExit("north", garden);
         outside.setExit("east", theater);
-        outside.setExit("south", this.lab);
+        outside.setExit("south", lab);
+        outside.setExit("west", pub);
+        garden.setExit("south", outside);
         theater.setExit("west", outside);
+        theater.setExit("east", library);
+        library.setExit("west", theater);
         pub.setExit("east", outside);
-        this.lab.setExit("north", outside);
-        this.lab.setExit("east", office);
-        office.setExit("west", this.lab);
+        lab.setExit("north", outside);
+        lab.setExit("east", office);
+        office.setExit("west", lab);
         office.setExit("south", storage);
         storage.setExit("north", office);
-
-        // 任何地方都可以进入传送门
+        storage.setExit("west", sewers);
         storage.setExit("down", portal);
-        portal.setExit("up", storage); // 虽然传送门会随机传送，但仍保留一个出口逻辑
+        sewers.setExit("east", storage);
+        secretRoom.setExit("south", reactor);
+        reactor.setExit("north", secretRoom);
+        secretRoom.setExit("up", outside);
+        pub.setExit("east", outside);
+        // --- 4. 投放【新增】道具 ---
+        garden.addItem(new Item("量子指南针", "定位空间异常", 1));
+        office.addItem(new Item("战术手电", "照亮黑暗区域", 2));
+        storage.addItem(new Item("重力背带", "使背负变轻", 2));
+        library.addItem(new Item("大容量登山包", "大幅提升负重限制", 3));
+        office.addItem(new Item("黄铜钥匙", "一把古旧的钥匙", 1));
+        pub.addItem(new Item("辐射盾牌", "进入反应堆的凭证", 5));
 
+        // 也可以给某些房间加点饼干
+        theater.addItem(new Item("魔法饼干", "吃了可以增加负重", 1));
+
+        allRooms.addAll(Arrays.asList(outside, theater, pub, lab, secretRoom, office, storage, portal, garden, library, reactor, sewers));
         player.setCurrentRoom(outside);
-
-        for (Room room : allRooms) {
-            if (!(room instanceof TransporterRoom) && room != this.secretRoom && random.nextDouble() < 0.3) {
-                room.addItem(new Item("cookie", "散发着甜香的魔法饼干", 1));
-            }
-        }
-        if (!player.getCurrentRoom().getItems().containsKey("cookie")) {
-            player.getCurrentRoom().addItem(new Item("cookie", "新手福利饼干", 1));
-        }
     }
 
     /**
@@ -216,19 +204,17 @@ public class Game {
      * 检测多重前置条件是否满足，若是，则推动并改变游戏的世界线。
      */
     public void checkTasks() {
-        if (!keyTaskCompleted && player.getCurrentRoom() == lab && player.hasItem("key")) {
+        // 判断条件改为中文名 "黄铜钥匙"
+        if (!keyTaskCompleted && player.getCurrentRoom() == lab && player.hasItem("黄铜钥匙")) {
             keyTaskCompleted = true;
             lab.setDescription("计算机实验室（中央服务器处由于暗门开启，露出了一个向下的洞口）");
             lab.setExit("down", secretRoom);
 
             String title = "✨ 发现隐藏区域";
-            String msg = "当你携带 [key] 踏入实验室时，老旧服务器发出轰鸣...\n"
-                    + "地面钢板缓缓滑开，露出了一个全新的向下出口：[down]！";
+            String msg = "当你携带 [黄铜钥匙] 踏入实验室时，老旧服务器发出轰鸣...\n"
+                    + "地面钢板缓缓滑开，露出了一个全新的向下出口：[向下/down]！";
 
-            // 打印到控制台
             System.out.println("\n" + title + "\n" + msg);
-
-            // 触发 UI 弹窗
             if (storyListener != null) {
                 storyListener.onStoryEvent(title, msg);
             }
@@ -275,19 +261,41 @@ public class Game {
         return player;
     }
     /**
+     * 【新增方法】获取地图上所有房间的列表。
+     * 供 TransporterRoom 计算随机传送目的地。
+     *
+     * @return 包含所有房间的 List
+     */
+    public List<Room> getAllRooms() {
+        return allRooms;
+    }
+    /**
      * 处理单条指令字符串并执行。
      * 用于 GUI 按钮或文本框触发。
      *
      * @param inputLine 完整的指令字符串（如 "go north"）
      */
     public void executeCommand(final String inputLine) {
+        System.out.println("\n----------------------------------------");
+
         Command command = parser.getCommand(inputLine);
         if (command == null) {
-            System.out.println("我不明白这个输入指令...");
+            System.out.println(" 无法识别的指令: " + inputLine);
         } else {
             command.execute(this);
         }
-        // 执行完后通知 UI 刷新（状态栏、图片、背包等）
         notifyStatusChange();
+    }
+
+    public void triggerVictory() {
+        String title = " 任务达成：文明之光";
+        String msg = "你带着[辐射盾牌]成功进入了核心反应堆区域。\n"
+                + "通过终端指令，你重新启动了大学的能源中枢，整座校园瞬间灯火通明！\n\n"
+                + "恭喜你，你完成了最终任务，成为了校园的英雄！";
+
+        System.out.println("\n" + title + "\n" + msg);
+        if (storyListener != null) {
+            storyListener.onStoryEvent(title, msg);
+        }
     }
 }

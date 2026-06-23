@@ -31,15 +31,26 @@ public class TakeCommand extends Command {
         Player player = game.getPlayer();
         Room currentRoom = player.getCurrentRoom();
 
-        // 判断是拿走特定物品还是全部拿走
+        // 1. 处理“take all”的情况
         if (target.equalsIgnoreCase("all")) {
             player.takeAllItems(currentRoom);
-        } else {
-            player.takeItem(target, currentRoom);
+            // 批量拾取后，我们统一打印一次最终状态
+            System.out.println(">> 已尝试拾取房间内的所有物品。");
+        }
+        // 2. 处理拾取特定物品的情况
+        else {
+            // 【核心修改点】：使用 if 判断 takeItem 的返回值
+            if (player.takeItem(target, currentRoom)) {
+                // 只有返回 true 时（即既有该物品且没超重），才打印成功信息
+                System.out.println(" [确认] 你已成功将 " + target + " 放入背包。");
+            } else {
+                // 如果返回 false，说明失败了（具体原因已经在 Player 类中通过 System.out 输出了）
+                // 此时直接返回，不执行后面的负重状态显示
+                return false;
+            }
         }
 
-        // 每次操作完，打印当前背包与负重状态
-        System.out.println(player.getInventoryString());
+        System.out.println(" >> 当前有效总负重: " + player.getCurrentWeight() + "/" + player.getMaxWeight() + "kg");
         return false;
     }
 }

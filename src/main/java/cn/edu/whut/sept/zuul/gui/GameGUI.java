@@ -25,6 +25,8 @@ public class GameGUI {
     private JButton btnLook, btnBack, btnEat, btnItems;
     private DefaultListModel<String> roomItemsListModel;
     private JList<String> roomItemsList;
+    private JProgressBar weightBar;
+    private JLabel bagCountLabel;
 
     public GameGUI(Game game) {
         Font globalFont = new Font("Microsoft YaHei", Font.PLAIN, 14);
@@ -154,9 +156,9 @@ public class GameGUI {
         // --- C. 日志输出 (底部) ---
         logArea = new JTextArea();
         logArea.setEditable(false);
-        logArea.setBackground(new Color(15, 15, 15));
-        logArea.setForeground(new Color(190, 220, 190));
-        logArea.setFont(new Font("Microsoft YaHei", Font.PLAIN, 14));
+        logArea.setBackground(new Color(20, 20, 20));
+        logArea.setForeground(new Color(180, 255, 180));
+        logArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
         logArea.setLineWrap(true);
         logArea.setWrapStyleWord(true);
         logArea.setMargin(new Insets(10, 10, 10, 10));
@@ -180,7 +182,7 @@ public class GameGUI {
         bagPanel.setBackground(panelBackground);
         bagPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(60, 63, 65)),
-                " 🎒 随身背包 ", TitledBorder.LEFT, TitledBorder.TOP,
+                "  随身背包 ", TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Microsoft YaHei", Font.BOLD, 13), textColor
         ));
         bagListModel = new DefaultListModel<>();
@@ -210,17 +212,58 @@ public class GameGUI {
         // ==========================================
         // 4. 底部状态栏 (保持原样)
         // ==========================================
-        JPanel statusPanel = new JPanel(new BorderLayout());
-        statusPanel.setBackground(panelBackground);
+        JPanel statusPanel = new JPanel(new GridLayout(1, 3, 10, 0)); // 将状态栏分为左中右三块
+        statusPanel.setBackground(new Color(30, 30, 30));
         statusPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(60, 63, 65)),
-                BorderFactory.createEmptyBorder(6, 10, 6, 10)
+                BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(60, 63, 65)), // 顶部边框线
+                BorderFactory.createEmptyBorder(8, 15, 8, 15)
         ));
 
-        statusBarLabel = new JLabel("状态栏: 初始化中...");
-        statusBarLabel.setForeground(textColor);
-        statusBarLabel.setFont(new Font("Microsoft YaHei", Font.PLAIN, 12));
-        statusPanel.add(statusBarLabel, BorderLayout.CENTER);
+// --- 左侧：角色信息 ---
+        JPanel leftStatus = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        leftStatus.setOpaque(false);
+        JLabel playerIcon = new JLabel(" 探险者");
+        playerIcon.setForeground(new Color(155, 89, 182)); // 紫色
+        playerIcon.setFont(new Font("Microsoft YaHei", Font.BOLD, 13));
+        leftStatus.add(playerIcon);
+
+// 新增：背包物品计数
+        JLabel bagCountLabel = new JLabel(" 0 件");
+        bagCountLabel.setForeground(new Color(200, 200, 200));
+        this.bagCountLabel = bagCountLabel; // 需在类成员中声明
+        leftStatus.add(bagCountLabel);
+
+// --- 中间：当前位置 ---
+        JPanel centerStatus = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        centerStatus.setOpaque(false);
+        JLabel locIcon = new JLabel("📍 当前位置:");
+        locIcon.setForeground(new Color(52, 152, 219)); // 蓝色
+        statusBarLabel = new JLabel("初始化中...");
+        statusBarLabel.setForeground(Color.WHITE);
+        statusBarLabel.setFont(new Font("Microsoft YaHei", Font.ITALIC, 13));
+        centerStatus.add(locIcon);
+        centerStatus.add(statusBarLabel);
+
+// --- 右侧：负重系统 ---
+        JPanel rightStatus = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightStatus.setOpaque(false);
+
+        weightBar = new JProgressBar(0, 100);
+        weightBar.setPreferredSize(new Dimension(160, 16));
+        weightBar.setStringPainted(true);
+        weightBar.setFont(new Font("Consolas", Font.BOLD, 10));
+        weightBar.setBackground(new Color(45, 45, 45));
+        weightBar.setForeground(new Color(46, 204, 113));
+        weightBar.setBorder(BorderFactory.createLineBorder(new Color(60, 63, 65)));
+
+        JLabel weightIcon = new JLabel("容量");
+        rightStatus.add(weightIcon);
+        rightStatus.add(weightBar);
+
+// 将三部分添加到主状态面板
+        statusPanel.add(leftStatus);
+        statusPanel.add(centerStatus);
+        statusPanel.add(rightStatus);
 
         mainPanel.add(statusPanel, BorderLayout.SOUTH);
     }
@@ -250,10 +293,15 @@ public class GameGUI {
         btnBack.addActionListener(e -> game.executeCommand("back"));
         btnItems.addActionListener(e -> game.executeCommand("items"));
         btnEat.addActionListener(e -> {
-            if (game.getPlayer().hasItem("cookie")) {
-                game.executeCommand("eat cookie");
+            String targetCookie = game.getPlayer().getInventory().keySet().stream()
+                    .filter(name -> name.contains("饼干"))
+                    .findFirst()
+                    .orElse(null);
+
+            if (targetCookie != null) {
+                game.executeCommand("eat " + targetCookie);
             } else {
-                System.out.println("提示：你的背包里现在没有饼干。");
+                System.out.println("提示：你的背包里现在没有可食用的饼干。");
             }
         });
 
@@ -308,9 +356,11 @@ public class GameGUI {
                 JOptionPane.showMessageDialog(frame, message, title, JOptionPane.INFORMATION_MESSAGE);
             });
         });
+
     }
 
     public void refreshUI() {
+        // 1. 线程安全检查（保留）
         if (!SwingUtilities.isEventDispatchThread()) {
             SwingUtilities.invokeLater(this::refreshUI);
             return;
@@ -319,25 +369,47 @@ public class GameGUI {
         Player player = game.getPlayer();
         Room currentRoom = player.getCurrentRoom();
 
-        // 1. 同步更新场景图片与描述 (任务2)
-        roomPanel.setRoom(currentRoom);
-
-        // 2. 同步更新状态栏
         if (player != null && currentRoom != null) {
-            statusBarLabel.setText(String.format("玩家: %s | 当前位置: %s | 负重上限: %dkg",
-                    "探险者",
-                    currentRoom.getShortDescription(),
-                    player.getMaxWeight()
-            ));
+            // 2. 同步更新场景图片（保留）
+            roomPanel.setRoom(currentRoom);
+
+            // 3. 【重点修改】更新中间的位置文字
+            statusBarLabel.setText(currentRoom.getShortDescription());
+            if (currentRoom.isDark()) {
+                statusBarLabel.setForeground(new Color(241, 196, 15)); // 黑暗房间显示黄色
+                statusBarLabel.setText(currentRoom.getShortDescription() + " (环境幽暗)");
+            } else {
+                statusBarLabel.setForeground(Color.WHITE);
+            }
+
+            // 4. 【重点修改】更新左侧的物品计数
+            int itemCount = player.getInventory().size();
+            bagCountLabel.setText("背包容量 " + itemCount + " 件物品");
+
+            // 5. 【重点修改】更新右侧的负重条
+            int curWeight = player.getCurrentWeight();
+            int maxWeight = player.getMaxWeight();
+            weightBar.setMaximum(maxWeight);
+            weightBar.setValue(curWeight);
+            weightBar.setString(curWeight + " / " + maxWeight + " kg");
+
+            // 颜色反馈逻辑
+            float ratio = (float) curWeight / maxWeight;
+            if (ratio >= 1.0f) {
+                weightBar.setForeground(new Color(231, 76, 60)); // 超载红色
+            } else if (ratio >= 0.8f) {
+                weightBar.setForeground(new Color(230, 126, 34)); // 警告橙色
+            } else {
+                weightBar.setForeground(new Color(46, 204, 113)); // 安全绿色
+            }
         }
 
-        // 3. 同步更新背包列表
+        // 6. 更新侧边栏列表（保留并更新）
         bagListModel.clear();
         game.getPlayer().getInventory().forEach((name, item) -> {
             bagListModel.addElement(name + " (" + item.getWeight() + "kg)");
         });
 
-        // 4. 同步更新房间物品列表 (新增)
         roomItemsListModel.clear();
         game.getPlayer().getCurrentRoom().getItems().forEach((name, item) -> {
             roomItemsListModel.addElement(name + " (" + item.getWeight() + "kg)");
@@ -346,21 +418,27 @@ public class GameGUI {
 
     private void showBagMenu(final Component comp, final int x, final int y, final String itemName) {
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem dropItem = new JMenuItem("丢弃 (Drop)");
+
+        if (itemName.contains("饼干")) {
+            JMenuItem eatItem = new JMenuItem("吃掉 " + itemName);
+            eatItem.addActionListener(e -> game.executeCommand("eat " + itemName));
+            menu.add(eatItem);
+        } else if (itemName.contains("包")) {
+            JMenuItem useItem = new JMenuItem("装备/背上 " + itemName);
+            useItem.addActionListener(e -> game.executeCommand("eat " + itemName)); // 指向 eat 命令处理
+            menu.add(useItem);
+        }
+
+        JMenuItem dropItem = new JMenuItem("丢弃物品");
         dropItem.addActionListener(e -> game.executeCommand("drop " + itemName));
         menu.add(dropItem);
 
-        if (itemName.toLowerCase().contains("cookie")) {
-            JMenuItem eatItem = new JMenuItem("吃掉 (Eat)");
-            eatItem.addActionListener(e -> game.executeCommand("eat " + itemName));
-            menu.add(eatItem);
-        }
         menu.show(comp, x, y);
     }
 
     private void showRoomMenu(final Component comp, final int x, final int y, final String itemName) {
         JPopupMenu menu = new JPopupMenu();
-        JMenuItem takeItem = new JMenuItem("捡起 (Take)");
+        JMenuItem takeItem = new JMenuItem("捡起物品");
         takeItem.addActionListener(e -> game.executeCommand("take " + itemName));
         menu.add(takeItem);
         menu.show(comp, x, y);

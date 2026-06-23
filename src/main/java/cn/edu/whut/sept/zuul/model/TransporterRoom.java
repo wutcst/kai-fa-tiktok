@@ -1,26 +1,32 @@
 package cn.edu.whut.sept.zuul.model;
 
-/**
- * 传输房间类。
- * 玩家进入此房间后，会被随机传送到地图上的另一个房间。
- */
-public class TransporterRoom extends Room {
+import cn.edu.whut.sept.zuul.core.Game;
 
-    /**
-     * 构造传输房间。
-     *
-     * @param description 描述信息
-     */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class TransporterRoom extends Room {
     public TransporterRoom(String description) {
         super(description);
     }
 
     /**
-     * 重写详细描述。
-     * 当玩家看（look）或进入时，给予危险或神秘的提示。
+     * 根据玩家是否拥有指南针返回目的地
      */
-    @Override
-    public String getLongDescription() {
-        return "【特殊场景】这是一间充满空间扭曲感的实验室...\n" + super.getLongDescription();
+    public Room getDestination(Game game) {
+        List<Room> allRooms = new ArrayList<>(game.getAllRooms());
+        allRooms.remove(this); // 从备选名单中移除当前传送门房间
+        Random rand = new Random();
+        if (game.getPlayer().hasItem("量子指南针")) {
+            System.out.println("【量子指南针】侦测到稳定的空间锚点：大学主入口。");
+            return allRooms.stream()
+                    .filter(r -> r.getShortDescription().equals("大学主入口"))
+                    .findFirst()
+                    .orElse(allRooms.get(0));
+        } else {
+            // 真正随机传送
+            return allRooms.get(rand.nextInt(allRooms.size()));
+        }
     }
 }
