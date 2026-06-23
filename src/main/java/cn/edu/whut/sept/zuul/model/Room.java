@@ -12,13 +12,19 @@ import java.util.HashMap;
  * @version 1.1
  */
 public class Room {
-    /** 房间描述。去掉了 final 修饰符，允许任务完成后动态改变房间外观特征 */
+    /**
+     * 房间描述。去掉了 final 修饰符，允许任务完成后动态改变房间外观特征
+     */
     private String description;
 
-    /** 房间的各个出口集合，Key为方向（如east），Value为对应的邻接房间 */
+    /**
+     * 房间的各个出口集合，Key为方向（如east），Value为对应的邻接房间
+     */
     private final HashMap<String, Room> exits;
 
-    /** 房间内放置的物品容器，支持存放任意数量的物品，Key为物品名，Value为物品对象 */
+    /**
+     * 房间内放置的物品容器，支持存放任意数量的物品，Key为物品名，Value为物品对象
+     */
     private final HashMap<String, Item> items;
 
     /**

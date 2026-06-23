@@ -4,6 +4,7 @@ import cn.edu.whut.sept.zuul.core.Game;
 import cn.edu.whut.sept.zuul.model.Room;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

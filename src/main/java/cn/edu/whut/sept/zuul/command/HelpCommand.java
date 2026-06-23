@@ -2,17 +2,14 @@ package cn.edu.whut.sept.zuul.command;
 
 import cn.edu.whut.sept.zuul.core.Game;
 
-public class HelpCommand extends Command
-{
-    private CommandWords commandWords;
+public class HelpCommand extends Command {
+    private final CommandWords commandWords;
 
-    public HelpCommand(CommandWords words)
-    {
+    public HelpCommand(CommandWords words) {
         commandWords = words;
     }
 
-    public boolean execute(Game game)
-    {
+    public boolean execute(Game game) {
         System.out.println("You are lost. You are alone. You wander");
         System.out.println("around at the university.");
         System.out.println();

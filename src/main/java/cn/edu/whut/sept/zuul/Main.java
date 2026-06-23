@@ -1,14 +1,12 @@
 package cn.edu.whut.sept.zuul;
+
 import cn.edu.whut.sept.zuul.gui.GameGUI;
 import cn.edu.whut.sept.zuul.core.Game;
 
 public class Main {
 
     public static void main(String[] args) {
-        boolean useCli = false;
-        if (args.length > 0 && args[0].equals("--cli")) {
-            useCli = true;
-        }
+        boolean useCli = args.length > 0 && args[0].equals("--cli");
 
         if (useCli) {
             Game game = new Game();

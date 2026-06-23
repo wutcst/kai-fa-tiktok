@@ -10,15 +10,13 @@ import java.util.Iterator;
  *
  * @author B
  */
-public class CommandWords
-{
-    private HashMap<String, Command> commands;
+public class CommandWords {
+    private final HashMap<String, Command> commands;
 
     /**
      * 构造函数，初始化并注册游戏中所有支持的命令集合.
      */
-    public CommandWords()
-    {
+    public CommandWords() {
         commands = new HashMap<String, Command>();
         commands.put("go", new GoCommand());
         commands.put("help", new HelpCommand(this));
@@ -37,18 +35,16 @@ public class CommandWords
      * @param word 用户输入的命令字
      * @return Command 对应的Command对象，如果不是合法命令则返回null
      */
-    public Command get(String word)
-    {
-        return (Command)commands.get(word);
+    public Command get(String word) {
+        return commands.get(word);
     }
 
     /**
      * 打印游戏中所有可用的命令词.
      */
-    public void showAll()
-    {
+    public void showAll() {
         // 补充泛型 <String> 以消除 Checkstyle / SonarLint 的“原始类型使用”警告
-        for(Iterator<String> i = commands.keySet().iterator(); i.hasNext(); ) {
+        for (Iterator<String> i = commands.keySet().iterator(); i.hasNext(); ) {
             System.out.print(i.next() + "  ");
         }
         System.out.println();

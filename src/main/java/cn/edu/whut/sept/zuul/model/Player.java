@@ -13,23 +13,35 @@ import java.util.List;
  * @version 1.0
  */
 public class Player {
-    /** 玩家名称 */
+    /**
+     * 玩家名称
+     */
     private final String name;
-    /** 玩家当前所处的房间 */
+    /**
+     * 玩家当前所处的房间
+     */
     private Room currentRoom;
-    /** 玩家的极限负重能力 */
+    /**
+     * 玩家的极限负重能力
+     */
     private int maxWeight;
-    /** 玩家背包当前的总重量 */
+    /**
+     * 玩家背包当前的总重量
+     */
     private int currentWeight;
-    /** 随身背包物品容器，Key为物品名，Value为物品对象 */
+    /**
+     * 随身背包物品容器，Key为物品名，Value为物品对象
+     */
     private final HashMap<String, Item> inventory;
-    /** 玩家走过的房间历史记录栈，用于实现多层级无限回退 */
+    /**
+     * 玩家走过的房间历史记录栈，用于实现多层级无限回退
+     */
     private final Stack<Room> roomHistory;
 
     /**
      * 创建一个玩家对象。
      *
-     * @param name 玩家的姓名
+     * @param name      玩家的姓名
      * @param maxWeight 玩家的最大负重量（单位：kg）
      */
     public Player(String name, int maxWeight) {
@@ -119,7 +131,7 @@ public class Player {
      * 包含对【超重行为】的强制拦截判断。
      *
      * @param itemName 要拾取的物品名称
-     * @param room 当前所在的房间（物品拾取来源）
+     * @param room     当前所在的房间（物品拾取来源）
      * @return boolean 拾取成功返回 true，因过重拦截或物品不存在返回 false
      */
     public boolean takeItem(String itemName, Room room) {
@@ -165,7 +177,7 @@ public class Player {
      * 玩家丢弃单一物品的核心业务逻辑。
      *
      * @param itemName 要丢弃的物品名称
-     * @param room 当前所处的房间（作为丢弃物的落脚点）
+     * @param room     当前所处的房间（作为丢弃物的落脚点）
      */
     public void dropItem(String itemName, Room room) {
         Item item = inventory.remove(itemName);

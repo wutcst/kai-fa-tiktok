@@ -9,7 +9,8 @@ public class GoCommand extends Command {
     @Override
     public boolean execute(Game game) {
         if (!hasSecondWord()) {
-            System.out.println("去哪里？"); return false;
+            System.out.println("去哪里？");
+            return false;
         }
 
         String direction = getSecondWord();

@@ -20,19 +20,29 @@ import java.util.Random;
  * @version 1.1
  */
 public class Game {
-    /** 负责解析用户键盘输入的解析器 */
+    /**
+     * 负责解析用户键盘输入的解析器
+     */
     private final Parser parser;
-    /** 游戏内的玩家单例实体 */
+    /**
+     * 游戏内的玩家单例实体
+     */
     private final Player player;
 
     // ----- 关键场景引用：为了供状态机直接修改房间状态而声明为全局实例变量 -----
-    /** 计算机实验室：触发隐藏任务的关键场景 */
+    /**
+     * 计算机实验室：触发隐藏任务的关键场景
+     */
     private Room lab;
-    /** 隐藏场景：完成任务后才会开启的超级核心机房 */
+    /**
+     * 隐藏场景：完成任务后才会开启的超级核心机房
+     */
     private Room secretRoom;
 
     // ----- 剧情控制状态位 -----
-    /** 任务状态机标志：钥匙运送解密任务是否已经达成 */
+    /**
+     * 任务状态机标志：钥匙运送解密任务是否已经达成
+     */
     private boolean keyTaskCompleted = false;
 
     private final List<Room> allRooms;
@@ -94,7 +104,7 @@ public class Game {
                     String text = new String(b, off, len, StandardCharsets.UTF_8);
                     notifyOutput(text);
                 }
-            }, true, "UTF-8"));
+            }, true, StandardCharsets.UTF_8));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -138,8 +148,12 @@ public class Game {
         portal.setImageName("portal.png");
 
         // 将所有房间加入列表管理
-        allRooms.add(outside); allRooms.add(theater); allRooms.add(pub);
-        allRooms.add(this.lab); allRooms.add(office); allRooms.add(storage);
+        allRooms.add(outside);
+        allRooms.add(theater);
+        allRooms.add(pub);
+        allRooms.add(this.lab);
+        allRooms.add(office);
+        allRooms.add(storage);
         allRooms.add(portal);
         allRooms.add(this.secretRoom);
 
@@ -153,11 +167,14 @@ public class Game {
         pub.addItem(new Item("wine", "一瓶陈年红酒", 3));
 
         // 4. 设置出口
-        outside.setExit("east", theater); outside.setExit("south", this.lab);
+        outside.setExit("east", theater);
+        outside.setExit("south", this.lab);
         theater.setExit("west", outside);
         pub.setExit("east", outside);
-        this.lab.setExit("north", outside); this.lab.setExit("east", office);
-        office.setExit("west", this.lab); office.setExit("south", storage);
+        this.lab.setExit("north", outside);
+        this.lab.setExit("east", office);
+        office.setExit("west", this.lab);
+        office.setExit("south", storage);
         storage.setExit("north", office);
 
         // 任何地方都可以进入传送门

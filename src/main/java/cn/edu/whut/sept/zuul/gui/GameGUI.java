@@ -37,7 +37,8 @@ public class GameGUI {
         } catch (Exception e) {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         frame = new JFrame("World of Zuul - 主窗口与视觉渲染 (任务1 & 任务2)");

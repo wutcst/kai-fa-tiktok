@@ -2,27 +2,22 @@ package cn.edu.whut.sept.zuul.command;
 
 import cn.edu.whut.sept.zuul.core.Game;
 
-public abstract class Command
-{
+public abstract class Command {
     private String secondWord;
 
-    public Command()
-    {
+    public Command() {
         secondWord = null;
     }
 
-    public String getSecondWord()
-    {
+    public String getSecondWord() {
         return secondWord;
     }
 
-    public boolean hasSecondWord()
-    {
+    public boolean hasSecondWord() {
         return secondWord != null;
     }
 
-    public void setSecondWord(String secondWord)
-    {
+    public void setSecondWord(String secondWord) {
         this.secondWord = secondWord;
     }
 
