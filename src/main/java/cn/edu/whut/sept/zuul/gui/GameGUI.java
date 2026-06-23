@@ -20,6 +20,9 @@ public class GameGUI {
     private JLabel statusBarLabel;
     private DefaultListModel<String> bagListModel;
     private JList<String> bagList;
+    private JTextField commandInput;
+    private JButton btnN, btnS, btnE, btnW, btnUp, btnDown;
+    private JButton btnLook, btnBack, btnEat, btnItems;
 
     public GameGUI(Game game) {
         Font globalFont = new Font("Microsoft YaHei", Font.PLAIN, 14);
@@ -32,16 +35,16 @@ public class GameGUI {
     }
 
     private void initUI() {
+        // --- 1. 基础皮肤设置 (保持不变) ---
         try {
             com.formdev.flatlaf.FlatDarkLaf.setup();
         } catch (Exception e) {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) { }
         }
 
-        frame = new JFrame("World of Zuul - 主窗口与视觉渲染 (任务1 & 任务2)");
+        frame = new JFrame("World of Zuul - 增强控制版");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(950, 650);
         frame.setLocationRelativeTo(null);
@@ -50,6 +53,7 @@ public class GameGUI {
         Color panelBackground = new Color(30, 30, 30);
         Color textColor = new Color(220, 220, 220);
         Color accentColor = new Color(79, 79, 229);
+        Color btnColor = new Color(52, 73, 94); // 预设按钮颜色
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBackground(darkBackground);
@@ -57,17 +61,18 @@ public class GameGUI {
         frame.setContentPane(mainPanel);
 
         // ==========================================
-        // 1. 左侧面板：操作按钮区 (九宫格罗盘)
+        // 1. 左侧面板：包含 [方向控制] + [快捷操作]
         // ==========================================
         JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
         leftPanel.setBackground(darkBackground);
         leftPanel.setPreferredSize(new Dimension(240, 0));
 
+        // --- A. 方向控制 (原九宫格罗盘) ---
         JPanel controlPanel = new JPanel(new BorderLayout(5, 5));
         controlPanel.setBackground(panelBackground);
         controlPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(60, 63, 65)),
-                " 操作按钮区 (待绑定) ", TitledBorder.LEFT, TitledBorder.TOP,
+                " 方向控制 ", TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Microsoft YaHei", Font.BOLD, 13), textColor
         ));
 
@@ -75,12 +80,13 @@ public class GameGUI {
         compassGrid.setBackground(panelBackground);
         compassGrid.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        JButton btnN = createStyledButton("N (北)", accentColor);
-        JButton btnS = createStyledButton("S (南)", accentColor);
-        JButton btnE = createStyledButton("E (东)", accentColor);
-        JButton btnW = createStyledButton("W (西)", accentColor);
-        JButton btnUp = createStyledButton("Up (上)", new Color(39, 174, 96));
-        JButton btnDown = createStyledButton("Down (下)", new Color(192, 57, 43));
+        // 注意：这里去掉了 JButton 前缀，直接赋值给成员变量
+        btnN = createStyledButton("N (北)", accentColor);
+        btnS = createStyledButton("S (南)", accentColor);
+        btnE = createStyledButton("E (东)", accentColor);
+        btnW = createStyledButton("W (西)", accentColor);
+        btnUp = createStyledButton("Up (上)", new Color(39, 174, 96));
+        btnDown = createStyledButton("Down (下)", new Color(192, 57, 43));
 
         compassGrid.add(btnUp);
         compassGrid.add(btnN);
@@ -94,20 +100,56 @@ public class GameGUI {
 
         controlPanel.add(compassGrid, BorderLayout.CENTER);
         leftPanel.add(controlPanel, BorderLayout.CENTER);
+
+        // --- B. 新增：快捷操作面板 (放在左侧面板底部) ---
+        JPanel shortcutPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+        shortcutPanel.setBackground(panelBackground);
+        shortcutPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(60, 63, 65)),
+                " 常用快捷键 ", TitledBorder.LEFT, TitledBorder.TOP,
+                new Font("Microsoft YaHei", Font.BOLD, 13), textColor
+        ));
+        btnLook = createStyledButton("看看四周", btnColor);
+        btnBack = createStyledButton("撤销/后退", btnColor);
+        btnEat = createStyledButton("吃点东西", btnColor);
+        btnItems = createStyledButton("查看物品", btnColor);
+        shortcutPanel.add(btnLook);
+        shortcutPanel.add(btnBack);
+        shortcutPanel.add(btnEat);
+        shortcutPanel.add(btnItems);
+        leftPanel.add(shortcutPanel, BorderLayout.SOUTH);
+
         mainPanel.add(leftPanel, BorderLayout.WEST);
 
         // ==========================================
-        // 2. 中央面板：中央放置 RoomPanel 视觉呈现区，下方放置 文本显示区
+        // 2. 中央面板：包含 [指令输入框] + [场景图] + [日志输出]
         // ==========================================
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
         centerPanel.setBackground(darkBackground);
 
-        // 房间视觉呈现逻辑 (在界面中央实时显示当前房间场景)
+        // --- A. 新增：指令输入框 (放在顶部) ---
+        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
+        inputPanel.setBackground(darkBackground);
+        commandInput = new JTextField();
+        commandInput.setBackground(new Color(35, 35, 35));
+        commandInput.setForeground(Color.WHITE);
+        commandInput.setCaretColor(Color.WHITE);
+        commandInput.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(60, 63, 65)),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        JLabel promptLabel = new JLabel(" 指令输入: ");
+        promptLabel.setForeground(accentColor);
+        inputPanel.add(promptLabel, BorderLayout.WEST);
+        inputPanel.add(commandInput, BorderLayout.CENTER);
+        centerPanel.add(inputPanel, BorderLayout.NORTH);
+
+        // --- B. 场景图 (中间) ---
         roomPanel = new RoomPanel();
         roomPanel.setPreferredSize(new Dimension(0, 350));
         centerPanel.add(roomPanel, BorderLayout.CENTER);
 
-        // 文本显示区 (JTextArea)
+        // --- C. 日志输出 (底部) ---
         logArea = new JTextArea();
         logArea.setEditable(false);
         logArea.setBackground(new Color(15, 15, 15));
@@ -125,7 +167,7 @@ public class GameGUI {
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
         // ==========================================
-        // 3. 背包列表区 (bagList) - 位于右侧
+        // 3. 右侧背包区 (保持原样)
         // ==========================================
         JPanel bagPanel = new JPanel(new BorderLayout(5, 5));
         bagPanel.setBackground(panelBackground);
@@ -148,7 +190,7 @@ public class GameGUI {
         mainPanel.add(bagPanel, BorderLayout.EAST);
 
         // ==========================================
-        // 4. 状态栏 (statusBarLabel) - 位于最底部
+        // 4. 底部状态栏 (保持原样)
         // ==========================================
         JPanel statusPanel = new JPanel(new BorderLayout());
         statusPanel.setBackground(panelBackground);
@@ -177,7 +219,34 @@ public class GameGUI {
 
     private void setupGameListeners() {
         game.setupRedirectedOutput();
+        // 1. 绑定方向按钮
+        btnN.addActionListener(e -> game.executeCommand("go north"));
+        btnS.addActionListener(e -> game.executeCommand("go south"));
+        btnE.addActionListener(e -> game.executeCommand("go east"));
+        btnW.addActionListener(e -> game.executeCommand("go west"));
+        btnUp.addActionListener(e -> game.executeCommand("go up"));
+        btnDown.addActionListener(e -> game.executeCommand("go down"));
 
+        // 2. 绑定快捷键
+        btnLook.addActionListener(e -> game.executeCommand("look"));
+        btnBack.addActionListener(e -> game.executeCommand("back"));
+        btnItems.addActionListener(e -> game.executeCommand("items"));
+        btnEat.addActionListener(e -> {
+            if (game.getPlayer().hasItem("cookie")) {
+                game.executeCommand("eat cookie");
+            } else {
+                System.out.println("提示：你的背包里现在没有饼干。");
+            }
+        });
+
+        // 3. 绑定回车输入事件
+        commandInput.addActionListener(e -> {
+            String input = commandInput.getText().trim();
+            if (!input.isEmpty()) {
+                game.executeCommand(input);
+                commandInput.setText(""); // 运行后清空
+            }
+        });
         game.addOutputListener(text -> SwingUtilities.invokeLater(() -> {
             logArea.append(text);
             logArea.setCaretPosition(logArea.getDocument().getLength());

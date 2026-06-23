@@ -248,7 +248,7 @@ public class Player {
      */
     public void increaseMaxWeight(int bonusWeight) {
         this.maxWeight += bonusWeight;
-        System.out.println("✨ 感觉到一股力量涌动！你的负重上限提升了 " + bonusWeight + "kg！");
+        System.out.println("感觉到一股力量涌动！你的负重上限提升了 " + bonusWeight + "kg！");
         System.out.println(">> 当前最大负重: " + this.maxWeight + "kg");
     }
 
