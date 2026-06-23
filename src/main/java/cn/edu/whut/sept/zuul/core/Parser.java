@@ -37,7 +37,34 @@ public class Parser {
         }
         return command;
     }
+    /**
+     * 根据提供的字符串解析命令.
+     *
+     * @param inputLine 输入的指令字符串
+     * @return 解析后的命令对象
+     */
+    public Command getCommand(String inputLine) {
+        String word1 = null;
+        String word2 = null;
 
+        if (inputLine == null || inputLine.trim().isEmpty()) {
+            return null;
+        }
+
+        java.util.Scanner tokenizer = new java.util.Scanner(inputLine);
+        if (tokenizer.hasNext()) {
+            word1 = tokenizer.next();
+            if (tokenizer.hasNext()) {
+                word2 = tokenizer.next();
+            }
+        }
+
+        Command command = commands.get(word1);
+        if (command != null) {
+            command.setSecondWord(word2);
+        }
+        return command;
+    }
     public void showCommands() {
         commands.showAll();
     }

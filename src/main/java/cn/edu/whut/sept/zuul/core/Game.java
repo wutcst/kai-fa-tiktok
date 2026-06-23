@@ -267,4 +267,20 @@ public class Game {
     public Player getPlayer() {
         return player;
     }
+    /**
+     * 处理单条指令字符串并执行。
+     * 用于 GUI 按钮或文本框触发。
+     *
+     * @param inputLine 完整的指令字符串（如 "go north"）
+     */
+    public void executeCommand(final String inputLine) {
+        Command command = parser.getCommand(inputLine);
+        if (command == null) {
+            System.out.println("我不明白这个输入指令...");
+        } else {
+            command.execute(this);
+        }
+        // 执行完后通知 UI 刷新（状态栏、图片、背包等）
+        notifyStatusChange();
+    }
 }

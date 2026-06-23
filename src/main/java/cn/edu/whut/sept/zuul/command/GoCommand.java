@@ -24,8 +24,8 @@ public class GoCommand extends Command {
 
             // 【特殊机制检测】：如果是传输房间
             if (nextRoom instanceof TransporterRoom) {
-                System.out.println("✨ 你踏入了 " + nextRoom.getShortDescription() + "...");
-                System.out.println("🌀 一阵天旋地转，你感觉空间发生了剧烈的折叠！");
+                System.out.println("你踏入了 " + nextRoom.getShortDescription() + "...");
+                System.out.println("一阵天旋地转，你感觉空间发生了剧烈的折叠！");
 
                 // 核心逻辑：强制重定向到随机房间
                 Room destination = game.getRandomRoom();
