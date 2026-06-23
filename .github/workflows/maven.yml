@@ -1,36 +1,42 @@
-name: Java CI with Maven
+name: Java CI with Maven (Full Pipeline)
 
 on:
   push:
-    branches: [ "master", "feature/**" ]
+    branches: [ "master", "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: 1. 拉取源代码
+        uses: actions/checkout@v4
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-        cache: maven
+      - name: 2. 配置 Java 环境 (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
 
-    - name: Run Tests
-      # 对应要求5：自动触发测试用例检查
-      run: mvn test
+      - name: 3. 安装虚拟显示器环境 (解决 Headless 报错的关键)
+        run: sudo apt-get update && sudo apt-get install -y xvfb libosmesa6
 
-    - name: Build with Maven (Generate JAR)
-      # 对应要求6：自动化打包，生成可执行 jar 文件
-      run: mvn clean package -DskipTests
+      - name: 4. 运行代码规范检查 (Checkstyle)
+        run: mvn checkstyle:check
 
-    - name: Upload JAR
-      # 将打包好的 JAR 文件上传到 GitHub，方便老师下载检查
-      uses: actions/upload-artifact@v4
-      with:
-        name: project-executable-jar
-        path: target/*.jar
+      - name: 5. 运行自动化测试 (使用 xvfb 模拟显示器)
+        # 加上 xvfb-run 是为了让 GUI 测试能在云端跑通
+        run: xvfb-run --auto-servernum mvn test
+
+      - name: 6. 自动化打包 (生成可执行 JAR)
+        run: mvn clean package -DskipTests
+
+      - name: 7. 上传游戏安装包 (Artifacts)
+        # 对应要求6：生成可供执行的工程文件，方便下载
+        uses: actions/upload-artifact@v4
+        with:
+          name: Zuul-Game-Executable
+          path: target/*.jar
