@@ -23,6 +23,8 @@ public class GameGUI {
     private JTextField commandInput;
     private JButton btnN, btnS, btnE, btnW, btnUp, btnDown;
     private JButton btnLook, btnBack, btnEat, btnItems;
+    private DefaultListModel<String> roomItemsListModel;
+    private JList<String> roomItemsList;
 
     public GameGUI(Game game) {
         Font globalFont = new Font("Microsoft YaHei", Font.PLAIN, 14);
@@ -167,27 +169,43 @@ public class GameGUI {
         mainPanel.add(centerPanel, BorderLayout.CENTER);
 
         // ==========================================
-        // 3. 右侧背包区 (保持原样)
+        // 3. 右侧面板：[个人背包] + [房间物品列表]
         // ==========================================
+        JPanel rightPanel = new JPanel(new GridLayout(2, 1, 5, 10)); // 上下平分
+        rightPanel.setBackground(darkBackground);
+        rightPanel.setPreferredSize(new Dimension(220, 0));
+
+        // --- A. 个人背包列表 ---
         JPanel bagPanel = new JPanel(new BorderLayout(5, 5));
         bagPanel.setBackground(panelBackground);
-        bagPanel.setPreferredSize(new Dimension(200, 0));
         bagPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(60, 63, 65)),
-                " 背包列表区 ", TitledBorder.LEFT, TitledBorder.TOP,
+                " 🎒 随身背包 ", TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Microsoft YaHei", Font.BOLD, 13), textColor
         ));
-
         bagListModel = new DefaultListModel<>();
         bagList = new JList<>(bagListModel);
         bagList.setBackground(new Color(24, 24, 24));
         bagList.setForeground(textColor);
-        bagList.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
-        JScrollPane bagScrollPane = new JScrollPane(bagList);
-        bagScrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 63, 65)));
-        bagPanel.add(bagScrollPane, BorderLayout.CENTER);
+        bagPanel.add(new JScrollPane(bagList), BorderLayout.CENTER);
 
-        mainPanel.add(bagPanel, BorderLayout.EAST);
+        // --- B. 房间物品列表 (新增) ---
+        JPanel roomItemsPanel = new JPanel(new BorderLayout(5, 5));
+        roomItemsPanel.setBackground(panelBackground);
+        roomItemsPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(60, 63, 65)),
+                " 🔍 房间可见物品 ", TitledBorder.LEFT, TitledBorder.TOP,
+                new Font("Microsoft YaHei", Font.BOLD, 13), textColor
+        ));
+        roomItemsListModel = new DefaultListModel<>();
+        roomItemsList = new JList<>(roomItemsListModel);
+        roomItemsList.setBackground(new Color(24, 24, 24));
+        roomItemsList.setForeground(new Color(150, 200, 255)); // 蓝色字体区分
+        roomItemsPanel.add(new JScrollPane(roomItemsList), BorderLayout.CENTER);
+
+        rightPanel.add(bagPanel);
+        rightPanel.add(roomItemsPanel);
+        mainPanel.add(rightPanel, BorderLayout.EAST);
 
         // ==========================================
         // 4. 底部状态栏 (保持原样)
@@ -253,6 +271,43 @@ public class GameGUI {
         }));
 
         game.addStatusListener(this::refreshUI);
+
+        // 1. 实现背包物品右键点击菜单
+        bagList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e) || e.getClickCount() == 2) {
+                    int index = bagList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        bagList.setSelectedIndex(index);
+                        String selected = bagList.getSelectedValue();
+                        String itemName = selected.split(" ")[0]; // 提取物品名称
+                        showBagMenu(e.getComponent(), e.getX(), e.getY(), itemName);
+                    }
+                }
+            }
+        });
+
+        // 2. 实现房间物品右键点击菜单
+        roomItemsList.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                if (SwingUtilities.isRightMouseButton(e) || e.getClickCount() == 2) {
+                    int index = roomItemsList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        roomItemsList.setSelectedIndex(index);
+                        String selected = roomItemsList.getSelectedValue();
+                        String itemName = selected.split(" ")[0];
+                        showRoomMenu(e.getComponent(), e.getX(), e.getY(), itemName);
+                    }
+                }
+            }
+        });
+
+        // 3. 注册剧情弹窗逻辑
+        game.setStoryListener((title, message) -> {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(frame, message, title, JOptionPane.INFORMATION_MESSAGE);
+            });
+        });
     }
 
     public void refreshUI() {
@@ -278,12 +333,37 @@ public class GameGUI {
 
         // 3. 同步更新背包列表
         bagListModel.clear();
-        Map<String, Item> inventory = player.getInventory();
-        if (inventory != null) {
-            inventory.forEach((name, item) -> {
-                bagListModel.addElement(name + " (" + item.getWeight() + "kg)");
-            });
+        game.getPlayer().getInventory().forEach((name, item) -> {
+            bagListModel.addElement(name + " (" + item.getWeight() + "kg)");
+        });
+
+        // 4. 同步更新房间物品列表 (新增)
+        roomItemsListModel.clear();
+        game.getPlayer().getCurrentRoom().getItems().forEach((name, item) -> {
+            roomItemsListModel.addElement(name + " (" + item.getWeight() + "kg)");
+        });
+    }
+
+    private void showBagMenu(final Component comp, final int x, final int y, final String itemName) {
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem dropItem = new JMenuItem("丢弃 (Drop)");
+        dropItem.addActionListener(e -> game.executeCommand("drop " + itemName));
+        menu.add(dropItem);
+
+        if (itemName.toLowerCase().contains("cookie")) {
+            JMenuItem eatItem = new JMenuItem("吃掉 (Eat)");
+            eatItem.addActionListener(e -> game.executeCommand("eat " + itemName));
+            menu.add(eatItem);
         }
+        menu.show(comp, x, y);
+    }
+
+    private void showRoomMenu(final Component comp, final int x, final int y, final String itemName) {
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem takeItem = new JMenuItem("捡起 (Take)");
+        takeItem.addActionListener(e -> game.executeCommand("take " + itemName));
+        menu.add(takeItem);
+        menu.show(comp, x, y);
     }
 
     public void show() {

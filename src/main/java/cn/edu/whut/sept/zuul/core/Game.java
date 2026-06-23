@@ -45,8 +45,14 @@ public class Game {
      */
     private boolean keyTaskCompleted = false;
 
+    private StoryListener storyListener;
+
     private final List<Room> allRooms;
     private final Random random;
+
+    public interface StoryListener {
+        void onStoryEvent(String title, String message);
+    }
 
     // ----- GUI 监听器与标准输出重定向机制 -----
     public interface GameOutputListener {
@@ -55,6 +61,10 @@ public class Game {
 
     public interface GameStatusListener {
         void onStatusChange();
+    }
+
+    public void setStoryListener(final StoryListener listener) {
+        this.storyListener = listener;
     }
 
     private final List<GameOutputListener> outputListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
@@ -206,25 +216,22 @@ public class Game {
      * 检测多重前置条件是否满足，若是，则推动并改变游戏的世界线。
      */
     public void checkTasks() {
-        // 触发条件验证：任务未完成 AND 玩家正处于实验室 AND 玩家背包里拿着任务要求的 'key' 物品
         if (!keyTaskCompleted && player.getCurrentRoom() == lab && player.hasItem("key")) {
-
-            // 状态机翻转，避免重复触发
             keyTaskCompleted = true;
-
-            // 【特效1】 改变场景环境：重置实验室的房间描述
-            lab.setDescription("计算机实验室（中央旧服务器阵列处由于暗门开启，地面露出了一个向下延申的洞口）");
-
-            // 【特效2】 建立新通路：为实验室动态挂载向下（down）通往秘密机房的出口路线
+            lab.setDescription("计算机实验室（中央服务器处由于暗门开启，露出了一个向下的洞口）");
             lab.setExit("down", secretRoom);
 
-            // 【特效3】 打印史诗级任务达成提示
-            System.out.println("\n=================================================");
-            System.out.println("✨【 任务完成：隐藏的世界线已被开启！ 】✨");
-            System.out.println("当你携带 [key] 踏入实验室时，角落里那台老旧的服务器突然发出轰鸣声。");
-            System.out.println("你走过去用黄铜钥匙插入隐蔽的锁孔，咔哒一声，地面一块合金钢板缓缓滑开，");
-            System.out.println("露出了一个全新的向下出口：[down]！");
-            System.out.println("=================================================\n");
+            String title = "✨ 发现隐藏区域";
+            String msg = "当你携带 [key] 踏入实验室时，老旧服务器发出轰鸣...\n"
+                    + "地面钢板缓缓滑开，露出了一个全新的向下出口：[down]！";
+
+            // 打印到控制台
+            System.out.println("\n" + title + "\n" + msg);
+
+            // 触发 UI 弹窗
+            if (storyListener != null) {
+                storyListener.onStoryEvent(title, msg);
+            }
         }
         notifyStatusChange();
     }
