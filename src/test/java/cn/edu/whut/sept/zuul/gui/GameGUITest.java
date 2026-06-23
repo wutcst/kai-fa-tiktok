@@ -29,26 +29,31 @@ public class GameGUITest {
     }
 
     /**
-     * 测试验证：点击“北(N)”按钮是否触发了 GoCommand 并移动了玩家位置
+     * 测试验证：点击“东(E)”按钮是否触发了 GoCommand 并移动了玩家到[阶梯教室]
      */
     @Test
-    public void testNorthButtonClickTriggersMove() throws Exception {
-        // 1. 获取初始房间（大学主入口）
+    public void testEastButtonClickTriggersMove() throws Exception {
+        // 1. 验证初始房间（大学主入口）
         Room startRoom = game.getPlayer().getCurrentRoom();
-        assertEquals("大学主入口", startRoom.getShortDescription());
+        assertEquals("大学主入口", startRoom.getShortDescription(), "初始位置应为大学主入口");
 
-        // 2. 通过反射获取 GameGUI 中的私有成员 btnN (北方按钮)
-        JButton btnN = (JButton) getPrivateField(gui, "btnN");
-        assertNotNull(btnN, "未能通过反射获取到北方按钮对象");
+        // 2. 通过反射获取 GameGUI 中的私有成员 btnE (东方按钮)
+        // 注意：变量名需与 GameGUI.java 中定义的成员变量名一致
+        JButton btnE = (JButton) getPrivateField(gui, "btnE");
+        assertNotNull(btnE, "未能通过反射获取到东方按钮对象");
 
-        // 3. 模拟点击按钮（在 EDT 线程中执行）
-        invokeAndWait(btnN::doClick);
+        // 3. 模拟点击按钮（在 EDT 线程中执行，确保 Swing 线程安全）
+        invokeAndWait(btnE::doClick);
 
         // 4. 验证结果
-        // 根据 Game.java 的初始化逻辑，outside(主入口) 的 north 是 garden(迷雾园林)
         Room currentRoom = game.getPlayer().getCurrentRoom();
-        assertNotEquals(startRoom, currentRoom, "点击按钮后玩家位置未发生改变");
-        assertEquals("迷雾园林", currentRoom.getShortDescription(), "玩家未移动到预期的[迷雾园林]");
+
+        // 逻辑校验：outside 的 east 应该是 theater (阶梯教室)
+        assertNotEquals(startRoom, currentRoom, "点击向东按钮后玩家位置未发生改变");
+        assertEquals("阶梯教室", currentRoom.getShortDescription(), "玩家未移动到预期的[阶梯教室]");
+
+        System.out.println("测试通过：成功从 [" + startRoom.getShortDescription() +
+                "] 移动到了 [" + currentRoom.getShortDescription() + "]");
     }
 
     /**
