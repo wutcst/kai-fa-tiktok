@@ -8,6 +8,7 @@ public class TransporterRoom extends Room {
 
     /**
      * 构造传输房间。
+     *
      * @param description 描述信息
      */
     public TransporterRoom(String description) {

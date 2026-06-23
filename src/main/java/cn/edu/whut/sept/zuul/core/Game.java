@@ -1,10 +1,12 @@
 package cn.edu.whut.sept.zuul.core;
+
 import cn.edu.whut.sept.zuul.command.Command;
 import cn.edu.whut.sept.zuul.model.Item;
 import cn.edu.whut.sept.zuul.model.Player;
 import cn.edu.whut.sept.zuul.model.Room;
 import cn.edu.whut.sept.zuul.model.TransporterRoom;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -18,23 +20,47 @@ import java.util.Random;
  * @version 1.1
  */
 public class Game {
-    /** 负责解析用户键盘输入的解析器 */
+    /**
+     * 负责解析用户键盘输入的解析器
+     */
     private final Parser parser;
-    /** 游戏内的玩家单例实体 */
+    /**
+     * 游戏内的玩家单例实体
+     */
     private final Player player;
 
     // ----- 关键场景引用：为了供状态机直接修改房间状态而声明为全局实例变量 -----
-    /** 计算机实验室：触发隐藏任务的关键场景 */
+    /**
+     * 计算机实验室：触发隐藏任务的关键场景
+     */
     private Room lab;
-    /** 隐藏场景：完成任务后才会开启的超级核心机房 */
+    /**
+     * 隐藏场景：完成任务后才会开启的超级核心机房
+     */
     private Room secretRoom;
 
     // ----- 剧情控制状态位 -----
-    /** 任务状态机标志：钥匙运送解密任务是否已经达成 */
+    /**
+     * 任务状态机标志：钥匙运送解密任务是否已经达成
+     */
     private boolean keyTaskCompleted = false;
 
     private final List<Room> allRooms;
     private final Random random;
+
+    // ----- GUI 监听器与标准输出重定向机制 -----
+    public interface GameOutputListener {
+        void onMessage(String msg);
+    }
+
+    public interface GameStatusListener {
+        void onStatusChange();
+    }
+
+    private final List<GameOutputListener> outputListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private final List<GameStatusListener> statusListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private final java.io.PrintStream originalOut = System.out;
+
     /**
      * 初始化游戏控制器。
      * 生成玩家、配置解析器，并构建所有的游戏房间及连接路线。
@@ -47,31 +73,92 @@ public class Game {
         createRooms();
     }
 
+    public void addOutputListener(GameOutputListener listener) {
+        outputListeners.add(listener);
+    }
+
+    public void addStatusListener(GameStatusListener listener) {
+        statusListeners.add(listener);
+    }
+
+    public void notifyStatusChange() {
+        for (GameStatusListener listener : statusListeners) {
+            listener.onStatusChange();
+        }
+    }
+
+    public void setupRedirectedOutput() {
+        try {
+            // 使用明确的 UTF_8 字符集创建 PrintStream
+            System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
+                @Override
+                public void write(int b) {
+                    // 不建议单字节写入，但为了兼容性，转存到原始输出
+                    originalOut.write(b);
+                }
+
+                @Override
+                public void write(byte[] b, int off, int len) {
+                    originalOut.write(b, off, len);
+                    // 关键点：使用 UTF_8 将字节数组整体解码为字符串
+                    String text = new String(b, off, len, StandardCharsets.UTF_8);
+                    notifyOutput(text);
+                }
+            }, true, StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void notifyOutput(String msg) {
+        for (GameOutputListener listener : outputListeners) {
+            listener.onMessage(msg);
+        }
+    }
+
+    public Parser getParser() {
+        return parser;
+    }
+
     /**
      * 构建所有基础房间、初始化隐藏房间、投放测试物品，并连接初始地图。
      * 开局在多个房间生成饼干（概率分布） 如果运气太差一个都没刷出来，在出生点放一个
      */
     private void createRooms() {
-        Room outside, theater, pub, lab, office, storage;
+        Room outside, theater, pub, office, storage;
         TransporterRoom portal; // 特殊传输房间
 
         // 1. 实例化场景
         outside = new Room("大学主入口");
+        outside.setImageName("outside.png");
         theater = new Room("阶梯教室");
+        theater.setImageName("theater.png");
         pub = new Room("校园酒吧");
-        lab = new Room("计算机实验室");
+        pub.setImageName("pub.png");
+        this.lab = new Room("计算机实验室");
+        this.lab.setImageName("lab.png");
+        this.secretRoom = new Room("神秘的地下核心机房");
+        this.secretRoom.setImageName("secret.png");
         office = new Room("管理办公室");
+        office.setImageName("office.png");
         storage = new Room("黑暗的储藏室");
+        storage.setImageName("storage.png");
         // 创建特殊传输房间
         portal = new TransporterRoom("名为‘虚空之眼’的神秘传送门");
+        portal.setImageName("portal.png");
 
         // 将所有房间加入列表管理
-        allRooms.add(outside); allRooms.add(theater); allRooms.add(pub);
-        allRooms.add(lab); allRooms.add(office); allRooms.add(storage);
+        allRooms.add(outside);
+        allRooms.add(theater);
+        allRooms.add(pub);
+        allRooms.add(this.lab);
+        allRooms.add(office);
+        allRooms.add(storage);
         allRooms.add(portal);
+        allRooms.add(this.secretRoom);
 
-        // 2. 放置魔法饼干（随机选择一个房间放置，且不放在传送室）
-        Room cookieRoom = allRooms.get(random.nextInt(allRooms.size() - 1));
+        // 2. 放置魔法饼干（随机选择一个房间放置，且不放在传送室或秘密核心机房）
+        Room cookieRoom = allRooms.get(random.nextInt(allRooms.size() - 2));
         cookieRoom.addItem(new Item("cookie", "散发着微光的魔法饼干", 1));
         System.out.println("[系统调试] 魔法饼干已随机出现在: " + cookieRoom.getShortDescription());
 
@@ -80,11 +167,14 @@ public class Game {
         pub.addItem(new Item("wine", "一瓶陈年红酒", 3));
 
         // 4. 设置出口
-        outside.setExit("east", theater); outside.setExit("south", lab);
+        outside.setExit("east", theater);
+        outside.setExit("south", this.lab);
         theater.setExit("west", outside);
         pub.setExit("east", outside);
-        lab.setExit("north", outside); lab.setExit("east", office);
-        office.setExit("west", lab); office.setExit("south", storage);
+        this.lab.setExit("north", outside);
+        this.lab.setExit("east", office);
+        office.setExit("west", this.lab);
+        office.setExit("south", storage);
         storage.setExit("north", office);
 
         // 任何地方都可以进入传送门
@@ -94,7 +184,7 @@ public class Game {
         player.setCurrentRoom(outside);
 
         for (Room room : allRooms) {
-            if (!(room instanceof TransporterRoom) && random.nextDouble() < 0.3) {
+            if (!(room instanceof TransporterRoom) && room != this.secretRoom && random.nextDouble() < 0.3) {
                 room.addItem(new Item("cookie", "散发着甜香的魔法饼干", 1));
             }
         }
@@ -102,6 +192,7 @@ public class Game {
             player.getCurrentRoom().addItem(new Item("cookie", "新手福利饼干", 1));
         }
     }
+
     /**
      * 获取地图上随机一个普通房间（用于传送）。
      */
@@ -135,6 +226,7 @@ public class Game {
             System.out.println("露出了一个全新的向下出口：[down]！");
             System.out.println("=================================================\n");
         }
+        notifyStatusChange();
     }
 
     /**

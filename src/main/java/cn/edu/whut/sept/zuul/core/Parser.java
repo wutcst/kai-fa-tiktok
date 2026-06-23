@@ -5,19 +5,16 @@ import cn.edu.whut.sept.zuul.command.CommandWords;
 
 import java.util.Scanner;
 
-public class Parser
-{
-    private CommandWords commands;  // holds all valid command words
-    private Scanner reader;         // source of command input
+public class Parser {
+    private final CommandWords commands;  // holds all valid command words
+    private final Scanner reader;         // source of command input
 
-    public Parser()
-    {
+    public Parser() {
         commands = new CommandWords();
         reader = new Scanner(System.in);
     }
 
-    public Command getCommand()
-    {
+    public Command getCommand() {
         String inputLine;   // will hold the full input line
         String word1 = null;
         String word2 = null;
@@ -27,22 +24,21 @@ public class Parser
         inputLine = reader.nextLine();
 
         Scanner tokenizer = new Scanner(inputLine);
-        if(tokenizer.hasNext()) {
+        if (tokenizer.hasNext()) {
             word1 = tokenizer.next();      // get first word
-            if(tokenizer.hasNext()) {
+            if (tokenizer.hasNext()) {
                 word2 = tokenizer.next();      // get second word
             }
         }
 
         Command command = commands.get(word1);
-        if(command != null) {
+        if (command != null) {
             command.setSecondWord(word2);
         }
         return command;
     }
 
-    public void showCommands()
-    {
+    public void showCommands() {
         commands.showAll();
     }
 }
