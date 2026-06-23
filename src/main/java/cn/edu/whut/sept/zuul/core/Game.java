@@ -35,6 +35,44 @@ public class Game {
 
     private final List<Room> allRooms;
     private final Random random;
+
+    // ----- GUI 监听器与标准输出重定向机制 -----
+    public interface GameOutputListener {
+        void onMessage(String msg);
+    }
+
+    private final List<GameOutputListener> outputListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private final java.io.PrintStream originalOut = System.out;
+
+    public void addOutputListener(GameOutputListener listener) {
+        outputListeners.add(listener);
+    }
+
+    public void setupRedirectedOutput() {
+        System.setOut(new java.io.PrintStream(new java.io.OutputStream() {
+            @Override
+            public void write(int b) {
+                originalOut.write(b);
+                notifyOutput(String.valueOf((char) b));
+            }
+            @Override
+            public void write(byte[] b, int off, int len) {
+                originalOut.write(b, off, len);
+                notifyOutput(new String(b, off, len));
+            }
+        }, true));
+    }
+
+    private void notifyOutput(String msg) {
+        for (GameOutputListener listener : outputListeners) {
+            listener.onMessage(msg);
+        }
+    }
+
+    public Parser getParser() {
+        return parser;
+    }
+
     /**
      * 初始化游戏控制器。
      * 生成玩家、配置解析器，并构建所有的游戏房间及连接路线。

@@ -219,6 +219,16 @@ public class Player {
                 .append(currentWeight).append("kg / ")
                 .append(maxWeight).append("kg").toString();
     }
+
+    /**
+     * 获取玩家背包内所有物品的容器 Map。
+     *
+     * @return HashMap<String, Item> 物品容器
+     */
+    public HashMap<String, Item> getInventory() {
+        return this.inventory;
+    }
+
     /**
      * 永久提升玩家的最大负重能力（用于 Magic Cookie 等道具的增益）。
      *
