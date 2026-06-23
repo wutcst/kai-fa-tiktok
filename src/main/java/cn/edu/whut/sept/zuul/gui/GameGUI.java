@@ -1,6 +1,5 @@
 package cn.edu.whut.sept.zuul.gui;
 
-
 import cn.edu.whut.sept.zuul.core.Game;
 import cn.edu.whut.sept.zuul.model.Item;
 import cn.edu.whut.sept.zuul.model.Player;
@@ -10,26 +9,29 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 
 public class GameGUI {
     private final Game game;
 
     private JFrame frame;
+    private RoomPanel roomPanel;
     private JTextArea logArea;
     private JLabel statusBarLabel;
     private DefaultListModel<String> bagListModel;
     private JList<String> bagList;
 
     public GameGUI(Game game) {
+        Font globalFont = new Font("Microsoft YaHei", Font.PLAIN, 14);
+        UIManager.put("Button.font", globalFont);
+        UIManager.put("Label.font", globalFont);
+        UIManager.put("TextArea.font", new Font("Microsoft YaHei", Font.PLAIN, 14));
         this.game = game;
         initUI();
         setupGameListeners();
     }
 
     private void initUI() {
-        // Apply FlatLaf look and feel for premium styling
         try {
             com.formdev.flatlaf.FlatDarkLaf.setup();
         } catch (Exception e) {
@@ -38,12 +40,11 @@ public class GameGUI {
             } catch (Exception ignored) {}
         }
 
-        frame = new JFrame("World of Zuul - 主窗口布局 (任务1)");
+        frame = new JFrame("World of Zuul - 主窗口与视觉渲染 (任务1 & 任务2)");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(900, 600);
+        frame.setSize(950, 650);
         frame.setLocationRelativeTo(null);
 
-        // Styling colors
         Color darkBackground = new Color(24, 24, 24);
         Color panelBackground = new Color(30, 30, 30);
         Color textColor = new Color(220, 220, 220);
@@ -55,34 +56,20 @@ public class GameGUI {
         frame.setContentPane(mainPanel);
 
         // ==========================================
-        // 1. 文本显示区 (logArea) - 位于主界面中央
+        // 1. 左侧面板：操作按钮区 (九宫格罗盘)
         // ==========================================
-        logArea = new JTextArea();
-        logArea.setEditable(false);
-        logArea.setBackground(new Color(15, 15, 15));
-        logArea.setForeground(new Color(190, 220, 190)); // 复古淡绿字符
-        logArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        logArea.setLineWrap(true);
-        logArea.setWrapStyleWord(true);
-        logArea.setMargin(new Insets(10, 10, 10, 10));
+        JPanel leftPanel = new JPanel(new BorderLayout(10, 10));
+        leftPanel.setBackground(darkBackground);
+        leftPanel.setPreferredSize(new Dimension(240, 0));
 
-        JScrollPane logScrollPane = new JScrollPane(logArea);
-        logScrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 63, 65)));
-        mainPanel.add(logScrollPane, BorderLayout.CENTER);
-
-        // ==========================================
-        // 2. 操作按钮区 (direction buttons grid) - 位于左侧
-        // ==========================================
         JPanel controlPanel = new JPanel(new BorderLayout(5, 5));
         controlPanel.setBackground(panelBackground);
-        controlPanel.setPreferredSize(new Dimension(220, 0));
         controlPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(60, 63, 65)),
-                " 操作按钮区 ", TitledBorder.LEFT, TitledBorder.TOP,
+                " 操作按钮区 (待绑定) ", TitledBorder.LEFT, TitledBorder.TOP,
                 new Font("Microsoft YaHei", Font.BOLD, 13), textColor
         ));
 
-        // Layout compass grid for directions
         JPanel compassGrid = new JPanel(new GridLayout(3, 3, 5, 5));
         compassGrid.setBackground(panelBackground);
         compassGrid.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -96,23 +83,52 @@ public class GameGUI {
 
         compassGrid.add(btnUp);
         compassGrid.add(btnN);
-        compassGrid.add(new JLabel("")); // placeholder
+        compassGrid.add(new JLabel(""));
         compassGrid.add(btnW);
         compassGrid.add(new JLabel("🧭", SwingConstants.CENTER));
         compassGrid.add(btnE);
         compassGrid.add(btnDown);
         compassGrid.add(btnS);
-        compassGrid.add(new JLabel("")); // placeholder
+        compassGrid.add(new JLabel(""));
 
         controlPanel.add(compassGrid, BorderLayout.CENTER);
-        mainPanel.add(controlPanel, BorderLayout.WEST);
+        leftPanel.add(controlPanel, BorderLayout.CENTER);
+        mainPanel.add(leftPanel, BorderLayout.WEST);
+
+        // ==========================================
+        // 2. 中央面板：中央放置 RoomPanel 视觉呈现区，下方放置 文本显示区
+        // ==========================================
+        JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
+        centerPanel.setBackground(darkBackground);
+
+        // 房间视觉呈现逻辑 (在界面中央实时显示当前房间场景)
+        roomPanel = new RoomPanel();
+        roomPanel.setPreferredSize(new Dimension(0, 350));
+        centerPanel.add(roomPanel, BorderLayout.CENTER);
+
+        // 文本显示区 (JTextArea)
+        logArea = new JTextArea();
+        logArea.setEditable(false);
+        logArea.setBackground(new Color(15, 15, 15));
+        logArea.setForeground(new Color(190, 220, 190));
+        logArea.setFont(new Font("Microsoft YaHei", Font.PLAIN, 14));
+        logArea.setLineWrap(true);
+        logArea.setWrapStyleWord(true);
+        logArea.setMargin(new Insets(10, 10, 10, 10));
+
+        JScrollPane logScrollPane = new JScrollPane(logArea);
+        logScrollPane.setBorder(BorderFactory.createLineBorder(new Color(60, 63, 65)));
+        logScrollPane.setPreferredSize(new Dimension(0, 220));
+        centerPanel.add(logScrollPane, BorderLayout.SOUTH);
+
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
 
         // ==========================================
         // 3. 背包列表区 (bagList) - 位于右侧
         // ==========================================
         JPanel bagPanel = new JPanel(new BorderLayout(5, 5));
         bagPanel.setBackground(panelBackground);
-        bagPanel.setPreferredSize(new Dimension(220, 0));
+        bagPanel.setPreferredSize(new Dimension(200, 0));
         bagPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(new Color(60, 63, 65)),
                 " 背包列表区 ", TitledBorder.LEFT, TitledBorder.TOP,
@@ -159,14 +175,14 @@ public class GameGUI {
     }
 
     private void setupGameListeners() {
-        // Redirect stdout to callback
         game.setupRedirectedOutput();
 
-        // Redirect console prints to GUI text area on EDT
         game.addOutputListener(text -> SwingUtilities.invokeLater(() -> {
             logArea.append(text);
             logArea.setCaretPosition(logArea.getDocument().getLength());
         }));
+
+        game.addStatusListener(this::refreshUI);
     }
 
     public void refreshUI() {
@@ -178,16 +194,19 @@ public class GameGUI {
         Player player = game.getPlayer();
         Room currentRoom = player.getCurrentRoom();
 
-        // Update status bar content
+        // 1. 同步更新场景图片与描述 (任务2)
+        roomPanel.setRoom(currentRoom);
+
+        // 2. 同步更新状态栏
         if (player != null && currentRoom != null) {
-            statusBarLabel.setText(String.format("玩家: %s | 当前位置: %s | 负重限制: %dkg",
-                    player.getCurrentRoom() != null ? "探险者" : "未知",
+            statusBarLabel.setText(String.format("玩家: %s | 当前位置: %s | 负重上限: %dkg",
+                    "探险者",
                     currentRoom.getShortDescription(),
                     player.getMaxWeight()
             ));
         }
 
-        // Update backpack JList
+        // 3. 同步更新背包列表
         bagListModel.clear();
         Map<String, Item> inventory = player.getInventory();
         if (inventory != null) {
@@ -199,11 +218,6 @@ public class GameGUI {
 
     public void show() {
         frame.setVisible(true);
-        // Print welcome text using System.out, which is captured and redirected to logArea
-        System.out.println("欢迎来到《World of Zuul》扩展重构版本!");
-        System.out.println("当前控制台输出已成功重定向至 GUI 文本域。");
-        System.out.println("--------------------------------------------------");
-        System.out.println(game.getPlayer().getCurrentRoom().getLongDescription());
         refreshUI();
     }
 }

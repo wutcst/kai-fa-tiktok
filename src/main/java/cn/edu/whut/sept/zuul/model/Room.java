@@ -144,7 +144,27 @@ public class Room {
      *
      * @return HashMap<String, Item> 当前房间内所有物品的哈希表
      */
+    private String imageName;
+
     public HashMap<String, Item> getItems() {
         return this.items;
+    }
+
+    /**
+     * 获取房间绑定的图片名称
+     *
+     * @return String 图片文件名
+     */
+    public String getImageName() {
+        return imageName;
+    }
+
+    /**
+     * 设置房间绑定的图片名称
+     *
+     * @param imageName 图片文件名
+     */
+    public void setImageName(String imageName) {
+        this.imageName = imageName;
     }
 }
