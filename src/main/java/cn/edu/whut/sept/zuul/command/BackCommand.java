@@ -39,17 +39,13 @@ public class BackCommand extends Command {
             return false;
         }
 
-        // 3. 核心流转逻辑：从记录栈弹出上一间房，并变更当前角色位置
         Room previousRoom = history.pop();
         player.setCurrentRoom(previousRoom);
-
-        // 【核心变更点说明】：回退操作本质上也是发生了空间移动，
-        // 有可能会触发诸如“将钥匙带回特定房间”的任务，因此退回后同样需要运行一次状态机检测机制。
         game.checkTasks();
 
-        // 4. 展现成功回退后的新场景
         System.out.println("<< 成功回退到上一个场景 <<");
-        System.out.println(player.getCurrentRoom().getLongDescription());
+        boolean hasLight = player.hasItem("战术手电");
+        System.out.println(player.getCurrentRoom().getLongDescription(hasLight));
 
         return false;
     }

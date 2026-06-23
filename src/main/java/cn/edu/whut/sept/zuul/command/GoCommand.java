@@ -1,9 +1,8 @@
 package cn.edu.whut.sept.zuul.command;
 
-import cn.edu.whut.sept.zuul.model.Player;
-import cn.edu.whut.sept.zuul.model.Room;
-import cn.edu.whut.sept.zuul.model.TransporterRoom;
 import cn.edu.whut.sept.zuul.core.Game;
+import cn.edu.whut.sept.zuul.model.*;
+import java.util.Random;
 
 public class GoCommand extends Command {
     @Override
@@ -15,28 +14,47 @@ public class GoCommand extends Command {
 
         String direction = getSecondWord();
         Player player = game.getPlayer();
-        Room nextRoom = player.getCurrentRoom().getExit(direction);
+        Room current = player.getCurrentRoom();
+        Room nextRoom = current.getExit(direction);
 
         if (nextRoom == null) {
             System.out.println("那里没有路！");
-        } else {
-            player.pushRoomToHistory(player.getCurrentRoom());
-
-            // 【特殊机制检测】：如果是传输房间
-            if (nextRoom instanceof TransporterRoom) {
-                System.out.println("你踏入了 " + nextRoom.getShortDescription() + "...");
-                System.out.println("一阵天旋地转，你感觉空间发生了剧烈的折叠！");
-
-                // 核心逻辑：强制重定向到随机房间
-                Room destination = game.getRandomRoom();
-                player.setCurrentRoom(destination);
-            } else {
-                player.setCurrentRoom(nextRoom);
-            }
-
-            game.checkTasks();
-            System.out.println(player.getCurrentRoom().getLongDescription());
+            return false;
         }
+
+        // 1. [特性] 能源反应堆准入检测
+        if (nextRoom.getShortDescription().equals("能源反应堆") && !player.hasItem("辐射盾牌")) {
+            System.out.println("【警告】那里辐射太强！你需要 [辐射盾牌] 才能进入。");
+            return false;
+        }
+
+        // 2. [特性] 迷雾园林迷失逻辑
+        if (nextRoom.getShortDescription().equals("迷雾园林") && !player.hasItem("量子指南针"))  {
+            if (new Random().nextDouble() < 0.5) {
+                System.out.println("你在园林的迷雾中迷失了方向，不知不觉走回了原点...");
+                return false;
+            }
+        }
+
+        // 执行移动
+        player.pushRoomToHistory(current);
+
+        if (nextRoom instanceof TransporterRoom) {
+            Room dest = ((TransporterRoom) nextRoom).getDestination(game);
+            player.setCurrentRoom(dest);
+        } else {
+            player.setCurrentRoom(nextRoom);
+        }
+
+        // 重点：增加胜利条件检测
+        Room target = player.getCurrentRoom();
+        if (target.getShortDescription().equals("能源反应堆")) {
+            game.triggerVictory(); // 触发胜利
+        }
+
+        game.checkTasks();
+        boolean hasLight = player.hasItem("战术手电");
+        System.out.println(player.getCurrentRoom().getLongDescription(hasLight));
         return false;
     }
 }
